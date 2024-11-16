@@ -1,0 +1,68 @@
+import numpy as np
+import pandas as pd
+from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.decomposition import PCA
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+from sklearn.datasets import fetch_openml
+import matplotlib.pyplot as plt
+
+# Load a sample dataset (e.g., MNIST as a proxy for image data)
+# MNIST contains grayscale images of digits (can be replaced with cats vs. dogs dataset)
+data = fetch_openml('mnist_784', version=1, as_frame=False)
+X, y = data.data, data.target
+
+# For simplicity, use a binary classification task (e.g., digits '3' vs '8')
+X = X[(y == '3') | (y == '8')]
+y = y[(y == '3') | (y == '8')]
+y = (y == '8').astype(int)  # Convert to binary labels: 0 = '3', 1 = '8'
+
+# Normalize pixel values
+X = X / 255.0
+
+# Split data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Apply PCA for dimensionality reduction
+pca = PCA(n_components=50)  # Retain 50 principal components
+X_train_pca = pca.fit_transform(X_train)
+X_test_pca = pca.transform(X_test)
+
+# Find the best value of K using cross-validation
+k_values = range(1, 21)
+cv_scores = []
+
+for k in k_values:
+    knn = KNeighborsClassifier(n_neighbors=k)
+    scores = cross_val_score(knn, X_train_pca, y_train, cv=5, scoring="accuracy")
+    cv_scores.append(scores.mean())
+
+# Find the optimal K
+optimal_k = k_values[np.argmax(cv_scores)]
+print(f"The optimal value of K is {optimal_k} with cross-validation accuracy of {max(cv_scores):.2f}")
+
+# Train and evaluate the K-NN model with the optimal K
+knn_optimal = KNeighborsClassifier(n_neighbors=optimal_k)
+knn_optimal.fit(X_train_pca, y_train)
+y_pred = knn_optimal.predict(X_test_pca)
+
+# Metrics
+accuracy = accuracy_score(y_test, y_pred)
+print(f"Test set accuracy with K={optimal_k}: {accuracy:.2f}")
+print("\nClassification Report:")
+print(classification_report(y_test, y_pred))
+
+# Confusion Matrix
+conf_matrix = confusion_matrix(y_test, y_pred)
+print("\nConfusion Matrix:")
+print(conf_matrix)
+
+# Visualize Cross-Validation Accuracy
+plt.figure(figsize=(10, 6))
+plt.plot(k_values, cv_scores, marker="o", label="Cross-Validation Accuracy")
+plt.axvline(optimal_k, color="r", linestyle="--", label=f"Optimal K={optimal_k}")
+plt.xlabel("Number of Neighbors (K)")
+plt.ylabel("Cross-Validation Accuracy")
+plt.title("K-NN: Choosing the Optimal K")
+plt.legend()
+plt.show()
