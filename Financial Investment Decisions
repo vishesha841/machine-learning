@@ -1,0 +1,59 @@
+import numpy as np
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.tree import DecisionTreeClassifier, plot_tree
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix, classification_report
+import matplotlib.pyplot as plt
+
+
+np.random.seed(42)
+n_samples = 200
+data = {
+    "Budget": np.random.randint(1000, 5000, n_samples),  # Advertising budget
+    "Platform": np.random.choice(["Social Media", "TV", "Radio"], n_samples),  # Advertising platform
+    "Duration": np.random.randint(1, 12, n_samples),  # Campaign duration in weeks
+    "Success": np.random.choice([0, 1], n_samples, p=[0.4, 0.6])  # Success or failure (binary)
+}
+
+
+df = pd.DataFrame(data)
+
+df["Platform"] = df["Platform"].map({"Social Media": 0, "TV": 1, "Radio": 2})
+
+X = df[["Budget", "Platform", "Duration"]]
+y = df["Success"]
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+
+tree = DecisionTreeClassifier(max_depth=4, random_state=42)
+tree.fit(X_train, y_train)
+
+y_pred = tree.predict(X_test)
+
+
+accuracy = accuracy_score(y_test, y_pred)
+precision = precision_score(y_test, y_pred)
+recall = recall_score(y_test, y_pred)
+f1 = f1_score(y_test, y_pred)
+
+
+print("Model Evaluation Metrics:")
+print(f"Accuracy: {accuracy:.2f}")
+print(f"Precision: {precision:.2f}")
+print(f"Recall: {recall:.2f}")
+print(f"F1 Score: {f1:.2f}")
+
+
+print("\nConfusion Matrix:")
+print(confusion_matrix(y_test, y_pred))
+
+
+print("\nClassification Report:")
+print(classification_report(y_test, y_pred))
+
+
+plt.figure(figsize=(12, 8))
+plot_tree(tree, feature_names=X.columns, class_names=["Failure", "Success"], filled=True, rounded=True)
+plt.title("Decision Tree for Marketing Strategies")
+plt.show()
