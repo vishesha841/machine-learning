@@ -1,0 +1,49 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
+from sklearn.datasets import load_iris
+np.random.seed(42)
+gene_expression_data = np.random.randn(100, 5000) 
+gene_names = [f'Gene_{i+1}' for i in range(5000)]
+sample_names = [f'Sample_{i+1}' for i in range(100)]
+df = pd.DataFrame(gene_expression_data, columns=gene_names, index=sample_names)
+scaler = StandardScaler()
+df_scaled = scaler.fit_transform(df)
+pca = PCA(n_components=2)  # Reduce to 2 principal components for visualization
+principal_components = pca.fit_transform(df_scaled)
+pca_df = pd.DataFrame(data=principal_components, columns=['PC1', 'PC2'], index=sample_names)
+explained_variance = pca.explained_variance_ratio_
+print(f"Explained variance by PC1 and PC2: {explained_variance}")
+plt.figure(figsize=(8, 6))
+plt.scatter(pca_df['PC1'], pca_df['PC2'], c='blue', edgecolor='k', alpha=0.7)
+plt.title('PCA of Gene Expression Data (2D)')
+plt.xlabel('Principal Component 1 (PC1)')
+plt.ylabel('Principal Component 2 (PC2)')
+plt.grid(True)
+plt.show()
+plt.figure(figsize=(8, 6))
+plt.scatter(pca.components_[0], pca.components_[1], c='red', edgecolor='k', alpha=0.7)
+for i, gene in enumerate(gene_names[:50]):  # Visualizing only the first 50 genes for clarity
+    plt.text(pca.components_[0, i], pca.components_[1, i], gene, fontsize=8, alpha=0.7)
+plt.title('PCA Biplot (Gene Loadings)')
+plt.xlabel('PC1 Loadings')
+plt.ylabel('PC2 Loadings')
+plt.grid(True)
+plt.show()
+plt.figure(figsize=(8, 6))
+plt.scatter(pca.components_[0], pca.components_[1], c='red', edgecolor='k', alpha=0.7)
+for i, gene in enumerate(gene_names[:50]):  # Visualizing only the first 50 genes for clarity
+    plt.text(pca.components_[0, i], pca.components_[1, i], gene, fontsize=8, alpha=0.7)
+plt.title('PCA Biplot (Gene Loadings)')
+plt.xlabel('PC1 Loadings')
+plt.ylabel('PC2 Loadings')
+plt.grid(True)
+plt.show()
+plt.figure(figsize=(8, 6))
+plt.plot(range(1, len(explained_variance) + 1), explained_variance, marker='o', linestyle='--', color='b')
+plt.title('Scree Plot')
+plt.xlabel('Principal Components')
+plt.ylabel('Explained Variance Ratio')
+plt.show()
