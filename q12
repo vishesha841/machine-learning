@@ -1,0 +1,27 @@
+
+import numpy as np
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import classification_report, confusion_matrix, roc_auc_score
+from imblearn.over_sampling import SMOTE
+from imblearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
+np.random.seed(42)
+n_samples = 1000
+X = np.random.randn(n_samples, 3)  # Three features: amount, location, behavior
+y = np.array([0] * 950 + [1] * 50)  # 950 legitimate transactions, 50 fraudulent transactions
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+smote = SMOTE(sampling_strategy='auto', random_state=42)
+log_reg = LogisticRegression(class_weight='balanced', random_state=42)
+
+pipeline = Pipeline(steps=[('smote', smote), ('log_reg', log_reg)])
+pipeline.fit(X_train_scaled, y_train)
+y_pred = pipeline.predict(X_test_scaled)
+
+print("Confusion Matrix:\n", confusion_matrix(y_test, y_pred))
+print("\nClassification Report:\n", classification_report(y_test, y_pred))
+print("ROC AUC Score:", roc_auc_score(y_test, y_pred))
