@@ -1,0 +1,45 @@
+import pandas as pd
+import statsmodels.api as sm
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import OneHotEncoder
+
+
+data = {
+    "Test_Scores": [85, 78, 92, 88, 76, 95, 89, 82, 77, 90],
+    "Study_Hours": [10, 8, 12, 9, 7, 13, 11, 9, 6, 10],
+    "Attendance_Rate": [95, 88, 90, 92, 85, 96, 93, 91, 84, 94],
+    "Socioeconomic_Status": ["High", "Low", "Middle", "Middle", "Low", "High", "High", "Middle", "Low", "Middle"]
+}
+
+
+df = pd.DataFrame(data)
+
+
+encoder = OneHotEncoder(drop="first", sparse=False)
+encoded_socioeconomic = encoder.fit_transform(df[["Socioeconomic_Status"]])
+encoded_columns = encoder.get_feature_names_out(["Socioeconomic_Status"])
+encoded_df = pd.DataFrame(encoded_socioeconomic, columns=encoded_columns)
+
+
+df = pd.concat([df, encoded_df], axis=1).drop(columns=["Socioeconomic_Status"])
+
+
+X = df[["Study_Hours", "Attendance_Rate"] + list(encoded_columns)]
+Y = df["Test_Scores"]
+
+
+X = sm.add_constant(X)
+
+
+X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2, random_state=42)
+
+
+model = sm.OLS(Y_train, X_train).fit()
+
+
+print(model.summary())
+
+
+predictions = model.predict(X_test)
+print("\nPredictions on the test set:")
+print(predictions)
